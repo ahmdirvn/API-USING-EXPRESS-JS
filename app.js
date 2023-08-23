@@ -15,6 +15,8 @@ const expressWs = require('express-ws')(app, server);
 const config = require('./config/app.config.json');
 const urlWebsite = 'site';
 
+
+
 global.__basedir = __dirname;
 global.__config_dir = __basedir + '/config';
 global.__class_dir = __basedir + '/class';
@@ -80,14 +82,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
 
-if(config.debug){
+if (config.debug) {
 	app.use(logger('dev'));
 }
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use('/',express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));
 app.disable('x-powered-by');
 
 // initialize express-session to allow us track the logged-in user across sessions.
@@ -104,7 +106,7 @@ app.use(session({
 // This middleware will check if user's cookie is still saved in browser and user is not set, then automatically log the user out.
 // This usually happens when you stop your express server after login, your cookie still remains saved in the browser.
 app.use((req, res, next) => {
-	if(req.session && req.session._menus){
+	if (req.session && req.session._menus) {
 		res.locals._menus = req.session._menus;
 	}
 
@@ -121,38 +123,38 @@ app.use(cors());
 
 //https://stackoverflow.com/questions/7067966/how-to-allow-cors
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+	res.header("Access-Control-Allow-Origin", "*");
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
 
-    if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
-        return res.status(200).json({});
-    }
+	if (req.method === 'OPTIONS') {
+		res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
+		return res.status(200).json({});
+	}
 
-    next();
+	next();
 });
 
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // ROUTERS SETTING
 const routers = getAllRouters(__routes_dir);
 for (const mainRoute in routers) {
-	for(const subRoute in routers[mainRoute]){
+	for (const subRoute in routers[mainRoute]) {
 		app.use(`${mainRoute === '/' ? '' : mainRoute}/${subRoute}`, require(routers[mainRoute][subRoute]));
 	}
 }
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
 	//if it's api request, return json instead
-	if(req.headers['content-type'] == 'application/json' || (req.headers['authorization'] && req.headers['authorization'].toLowerCase().includes('bearer '))){
+	if (req.headers['content-type'] == 'application/json' || (req.headers['authorization'] && req.headers['authorization'].toLowerCase().includes('bearer '))) {
 		res.status(404).send({
 			status: false,
 			error: "Sorry can't find this route!"
 		});
 
-		if(config.debug){
+		if (config.debug) {
 			next(createError(404));
 		}
 
@@ -163,9 +165,9 @@ app.use(function(req, res, next) {
 });
 
 // error handler
-app.use(function(err, req, res, next) {
-	if(config.debug === 2 || config.debug === 'verbose'){
-		console.error('This one is not found -->',req.method, req.originalUrl, err);
+app.use(function (err, req, res, next) {
+	if (config.debug === 2 || config.debug === 'verbose') {
+		console.error('This one is not found -->', req.method, req.originalUrl, err);
 	}
 
 	//simply redirect to default page if route not found
@@ -182,7 +184,7 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = {
-    app,
-    server,
-    config
+	app,
+	server,
+	config
 };
