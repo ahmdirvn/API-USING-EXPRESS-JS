@@ -7,10 +7,11 @@ const bcrypt = require('bcrypt')
 
 class _user {
 
+
+    //register user 
     async registerUser(data) {
 
-        // code to add user or login user
-
+        // code to add user
         const schema = Joi.object({
             name: Joi.string(),
             email: Joi.string(),
@@ -36,6 +37,7 @@ class _user {
 
         const Password = data.password;
         const rounds = 10;
+
 
         try {
             const hash = await new Promise((resolve, reject) => {
@@ -72,9 +74,55 @@ class _user {
 
 
 
-    loginUser() {
-        //code to login User
+    async login(email, password) {
+        const schema = Joi.object({
+            email: Joi.string().required(),
+            password: Joi.string().required()
+        }).options({
+            abortEarly: false
+        });
+
+        const validation = schema.validate({ email, password });
+
+        if (validation.error) {
+            const errorDetails = validation.error.details.map(detail => {
+                return detail.message;
+            });
+
+            return {
+                status: false,
+                code: 422,
+                error: errorDetails.join(',')
+            };
+        }
+
+        const user = await this.findUserByEmail(email);
+
+        if (!user) {
+            return null;
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+            return null;
+        }
+
+        return user;
     }
+
+    async findUserByEmail(email) {
+        const query = `SELECT * FROM users WHERE email = ?`;
+
+        try {
+            const result = await mysql.query(query, [email]); // Make sure to use the correct query method
+            return result.length > 0 ? result[0] : null;
+        } catch (error) {
+            console.error('Error finding user by email:', error);
+            return null;
+        }
+    }
+
 }
 
 
