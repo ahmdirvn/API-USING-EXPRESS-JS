@@ -2,12 +2,14 @@ const config = require(`${__config_dir}/app.config.json`);
 const { debug } = config;
 const mysql = new (require(`${__class_dir}/mariadb.class.js`))(config.db);
 const Joi = require('joi');
+const bcrypt = require('bcrypt')
 
 
 class _user {
 
-    registerUser(data) {
-        //code to add user or login user 
+    async registerUser(data) {
+
+        // code to add user or login user
 
         const schema = Joi.object({
             name: Joi.string(),
@@ -31,31 +33,44 @@ class _user {
             }
         }
 
-        //making query for insert data
-        const sql = {
-            query: `INSERT INTO users (name,email,password) VALUES (?,?,?)`,
-            params: [data.name, data.email, data.password]
+
+        const Password = data.password;
+        const rounds = 10;
+
+        try {
+            const hash = await new Promise((resolve, reject) => {
+                bcrypt.hash(Password, rounds, (err, hash) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(hash);
+                    }
+                });
+            });
+
+            const sql = {
+                query: `INSERT INTO users (name,email,password) VALUES (?,?,?)`,
+                params: [data.name, data.email, hash]
+            };
+
+            const result = await mysql.query(sql.query, sql.params);
+
+            return {
+                status: true,
+                data: result
+            };
+        } catch (error) {
+            if (debug) {
+                console.error('registrasi user error:', error);
+            }
+            return {
+                status: false,
+                error
+            };
         }
-
-        return mysql.query(sql.query, sql.params)
-            .then(data => {
-                return {
-                    status: true,
-                    data
-                }
-            })
-            .catch(error => {
-                if (debug) {
-                    console.error('registrasi user error : ', error)
-                }
-                return {
-                    status: false,
-                    error
-                }
-            })
-
-
     }
+
+
 
     loginUser() {
         //code to login User
